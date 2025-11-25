@@ -1,16 +1,38 @@
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:proyecto_homero/data/datasources/beer_remote_datasource.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'blocs/cart/cart_bloc.dart';
-import 'blocs/cart/cart_event.dart';
-import 'repositories/beer_repository.dart';
-import 'screens/settings_page.dart';
-import 'screens/beer_menu_screen.dart';
-import 'screens/favorites_page.dart';
-import 'screens/extras_page.dart';
+import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_bloc.dart';
+import 'package:proyecto_homero/presentation/services/notification_service.dart';
+import 'package:proyecto_homero/presentation/services/settings_service.dart';
+import 'presentation/blocs/cart/cart_bloc.dart';
+import 'presentation/blocs/cart/cart_event.dart';
+import 'data/repositories/beer_repository_impl.dart';
+import 'domain/repositories/beer_repository.dart';
+import 'presentation/screens/settings_page.dart';
+import 'presentation/screens/beer_menu_screen.dart';
+import 'presentation/screens/favorites_page.dart';
+import 'presentation/screens/extras_page.dart';
 
-void main() {
+Future<void> main() async {
+  // Asegura que los bindings de Flutter estén inicializados antes de cualquier otra cosa.
+  WidgetsFlutterBinding.ensureInitialized();
+  // Inicializa Firebase usando las opciones generadas por FlutterFire CLI.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // Inicializamos nuestro servicio de notificaciones
+  await NotificationService().init();
+
+  // Comprobamos si el recordatorio debe estar activo al iniciar
+  final settingsService = SettingsService();
+  if (await settingsService.getWaterReminder()) {
+    await NotificationService().scheduleHourlyWaterReminder();
+  }
   runApp(const TabernadeMoeApp());
 }
 
@@ -19,12 +41,22 @@ class TabernadeMoeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (context) => BeerRepository(),
-      child: BlocProvider(
-        create: (context) => CartBloc(
-          beerRepository: context.read<BeerRepository>(),
-        )..add(CartProductsLoaded()), // Dispara el evento inicial para cargar productos
+    return RepositoryProvider<BeerRepository>(
+      create: (context) => BeerRepositoryImpl(
+        remoteDataSource: BeerRemoteDataSourceImpl(
+          // Le pasamos la instancia de Firestore
+          firestore: FirebaseFirestore.instance,
+        ),
+      ),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => CartBloc(
+              beerRepository: context.read<BeerRepository>(),
+            )..add(CartProductsLoaded()),
+          ),
+          BlocProvider(create: (context) => BeerCounterBloc()),
+        ],
         child: MaterialApp(
           title: 'La App de la Taberna de Moe',
           theme: ThemeData(

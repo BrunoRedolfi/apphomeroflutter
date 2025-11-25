@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1046204540356",
+    "project_id": "app-homero-flutter",
+    "storage_bucket": "app-homero-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1046204540356:android:977ea8692a56ddce82f091",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_homero"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmN2GfPw3MtQQ0simtxiBZXekpEmNXeWc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
