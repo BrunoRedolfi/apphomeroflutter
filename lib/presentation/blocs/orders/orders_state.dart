@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-import '../../../domain/entities/favorite_order.dart';
-import '../../../domain/entities/order.dart';
+part of 'orders_bloc.dart';
 
 abstract class OrdersState extends Equatable {
   const OrdersState();

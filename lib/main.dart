@@ -1,21 +1,23 @@
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:proyecto_homero/data/repositories/auth_repository_impl.dart';
 import 'package:proyecto_homero/data/repositories/order_repository_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto_homero/data/datasources/beer_remote_datasource.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:proyecto_homero/domain/repositories/auth_repository.dart';
+import 'package:proyecto_homero/domain/repositories/order_repository.dart';
+import 'package:proyecto_homero/presentation/blocs/auth/auth_bloc.dart';
 import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_bloc.dart';
 import 'package:proyecto_homero/presentation/blocs/orders/orders_bloc.dart';
-import 'package:proyecto_homero/presentation/blocs/orders/orders_event.dart';
 import 'package:proyecto_homero/presentation/services/notification_service.dart';
 import 'package:proyecto_homero/presentation/services/settings_service.dart';
 import 'presentation/blocs/cart/cart_bloc.dart';
 import 'presentation/blocs/cart/cart_event.dart';
 import 'data/repositories/beer_repository_impl.dart';
 import 'domain/repositories/beer_repository.dart';
-import 'domain/repositories/order_repository.dart';
 import 'presentation/screens/settings_page.dart';
 import 'presentation/screens/beer_menu_screen.dart';
 import 'presentation/screens/orders_page.dart';
@@ -29,6 +31,7 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   // Inicializamos nuestro servicio de notificaciones
   await NotificationService().init();
 
@@ -56,24 +59,32 @@ class TabernadeMoeApp extends StatelessWidget {
           ),
         ),
         RepositoryProvider<OrderRepository>(
-          // CORRECCIÓN CRÍTICA: Debemos proveer la implementación concreta.
-          create: (context) => OrderRepositoryImpl(),
+          create: (context) => OrderRepositoryImpl(firestore: FirebaseFirestore.instance),
+        ),
+        RepositoryProvider<AuthRepository>(
+          create: (context) => AuthRepositoryImpl(),
         ),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
+            create: (context) => AuthBloc(
+              authRepository: context.read<AuthRepository>(),
+            )..add(AuthAnonymousSignInRequested()), // Solicitamos el login anónimo al inicio
+          ),
+          BlocProvider(
             create: (context) => CartBloc(
-              // El BLoC lee la abstracción, no la implementación.
               beerRepository: context.read<BeerRepository>(),
             )..add(CartProductsLoaded()),
           ),
           BlocProvider(create: (context) => BeerCounterBloc()),
           // Añadimos el OrdersBloc aquí para que esté disponible en toda la app
           BlocProvider(
-            create: (context) =>
-                OrdersBloc(orderRepository: context.read<OrderRepository>())
-              ..add(OrdersLoaded()), // Cargamos los pedidos al iniciar
+            create: (context) => OrdersBloc(
+              orderRepository: context.read<OrderRepository>(),
+              authBloc: context.read<AuthBloc>(),
+              cartBloc: context.read<CartBloc>(),
+            ),
           ),
         ],
         child: MaterialApp(

@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-import '../../../domain/entities/favorite_order.dart';
-import '../../../domain/entities/order.dart';
+part of 'orders_bloc.dart';
 
 abstract class OrdersEvent extends Equatable {
   const OrdersEvent();
@@ -10,11 +8,37 @@ abstract class OrdersEvent extends Equatable {
 
 class OrdersLoaded extends OrdersEvent {}
 
-class OrderRepeated extends OrdersEvent {
+class OrderConfirmed extends OrdersEvent {}
+
+class FavoriteOrderRepeated extends OrdersEvent {
   final FavoriteOrder favorite;
-  const OrderRepeated(this.favorite);
+  const FavoriteOrderRepeated(this.favorite);
+
   @override
   List<Object> get props => [favorite];
+}
+
+class OrderDeleted extends OrdersEvent {
+  final String orderId;
+  const OrderDeleted(this.orderId);
+
+  @override
+  List<Object> get props => [orderId];
+}
+
+class FavoriteOrderDeleted extends OrdersEvent {
+  final String favoriteId;
+  const FavoriteOrderDeleted(this.favoriteId);
+
+  @override
+  List<Object> get props => [favoriteId];
+}
+
+class OrderAddedToFavorites extends OrdersEvent {
+  final Order order;
+  const OrderAddedToFavorites(this.order);
+  @override
+  List<Object> get props => [order];
 }
 
 class OrderStatusChanged extends OrdersEvent {

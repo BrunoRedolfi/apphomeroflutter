@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'beer.dart';
 
@@ -15,6 +16,19 @@ class Order extends Equatable {
     required this.date,
     required this.status,
   });
+
+  factory Order.fromSnapshot(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Order(
+      id: doc.id,
+      items: (data['items'] as List).map((itemData) => Beer.fromMap(itemData)).toList(),
+      date: (data['date'] as Timestamp).toDate(),
+      status: OrderStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => OrderStatus.enProceso,
+      ),
+    );
+  }
 
   int get totalItems => items.fold(0, (sum, item) => sum + item.quantity);
 

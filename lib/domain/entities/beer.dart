@@ -15,6 +15,16 @@ class Beer extends Equatable {
     this.quantity = 0,
   });
 
+  factory Beer.fromMap(Map<String, dynamic> map) {
+    return Beer(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      price: (map['price'] as num?)?.toDouble() ?? 0.0,
+      image: map['image'] ?? '',
+      quantity: (map['quantity'] as int?) ?? 0,
+    );
+  }
+
   Beer copyWith({
     String? id,
     String? name,
