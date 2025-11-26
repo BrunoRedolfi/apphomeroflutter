@@ -70,115 +70,116 @@ class ExtrasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos un BlocBuilder para reconstruir la UI cuando el estado cambie
-    return BlocBuilder<BeerCounterBloc, BeerCounterState>(
-      builder: (context, state) {
-        return ListView(
-          padding: EdgeInsets.all(16),
-          children: [
-            Text(
-              'Extras de Homero 🍩🍺',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
+    // Usamos BlocListener para efectos secundarios (como mostrar un diálogo)
+    // y BlocBuilder para construir la UI.
+    return BlocListener<BeerCounterBloc, BeerCounterState>(
+      listener: (context, state) {
+        // Si el estado indica que se debe mostrar la alerta, la mostramos.
+        if (state.showHomerAlert) {
+          _mostrarAlertaHomero(context);
+        }
+      },
+      child: BlocBuilder<BeerCounterBloc, BeerCounterState>(
+        builder: (context, state) {
+          return ListView(
+            padding: EdgeInsets.all(16),
+            children: [
+              Text(
+                'Extras de Homero 🍩🍺',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
 
-            // Switch estilo "botón" adaptativo
-            Card(
-              color: Colors.yellow[100],
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                leading: Icon(Icons.settings, color: Colors.yellow[800]),
-                title: Text(
-                  'Activar contador de cervezas 🍺',
-                  style: TextStyle(
-                    fontSize: Platform.isIOS ? 16 : 18,
-                    fontWeight: FontWeight.bold,
+              // Switch estilo "botón" adaptativo
+              Card(
+                color: Colors.yellow[100],
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: Icon(Icons.settings, color: Colors.yellow[800]),
+                  title: Text(
+                    'Activar contador de cervezas 🍺',
+                    style: TextStyle(
+                      fontSize: Platform.isIOS ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  trailing: Switch.adaptive(
+                    value: state.isActive,
+                    onChanged: (value) {
+                      context.read<BeerCounterBloc>().add(BeerCounterToggled(value));
+                    },
                   ),
                 ),
-                trailing: Switch.adaptive(
-                  value: state.isActive,
-                  onChanged: (value) {
-                    // Despachamos el evento al BLoC
-                    context.read<BeerCounterBloc>().add(BeerCounterToggled(value));
+              ),
+
+              SizedBox(height: 20),
+
+              if (state.isActive) ...[
+                Text(
+                  'Cervezas consumidas hoy: ${state.beerCount}',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 10),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.yellow[700],
+                    foregroundColor: Colors.black,
+                  ),
+                  icon: Icon(Icons.add),
+                  label: Text("Agregar una Duff"),
+                  onPressed: () {
+                    // La única responsabilidad del botón es despachar el evento.
+                    context.read<BeerCounterBloc>().add(BeerCounterIncremented());
+                  },
+                ),
+                SizedBox(height: 20),
+              ],
+
+              Card(
+                color: Colors.yellow[100],
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: Icon(Icons.settings, color: Colors.yellow[800]),
+                  title: Text(
+                    'Descuentos especiales',
+                    style: TextStyle(
+                      fontSize: Platform.isIOS ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              // --- Botón para el Mapa ---
+              Card(
+                color: Colors.yellow[100],
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: Icon(Icons.map, color: Colors.yellow[800]),
+                  title: Text(
+                    'Ver Mapa',
+                    style: TextStyle(
+                      fontSize: Platform.isIOS ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.yellow[800]),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MapScreen()),
+                    );
                   },
                 ),
               ),
-            ),
-
-            SizedBox(height: 20),
-
-            // Mostramos el contador solo si el estado 'isActive' es true
-            if (state.isActive) ...[
-              Text(
-                'Cervezas consumidas hoy: ${state.beerCount}',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 10),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow[700],
-                  foregroundColor: Colors.black,
-                ),
-                icon: Icon(Icons.add),
-                label: Text("Agregar una Duff"),
-                onPressed: () {
-                  // Despachamos el evento para incrementar
-                  context.read<BeerCounterBloc>().add(BeerCounterIncremented());
-                  // La lógica de la alerta ahora puede vivir aquí o en el BLoC
-                  // si se vuelve más compleja. Por ahora, aquí está bien.
-                  if (state.beerCount + 1 == 21) {
-                    _mostrarAlertaHomero(context);
-                  }
-                },
-              ),
-              SizedBox(height: 20),
+              // --- FIN: Botón para el Mapa --
             ],
-
-            Card(
-              color: Colors.yellow[100],
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                leading: Icon(Icons.settings, color: Colors.yellow[800]),
-                title: Text(
-                  'Descuentos especiales',
-                  style: TextStyle(
-                    fontSize: Platform.isIOS ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-
-            // --- Botón para el Mapa ---
-            Card(
-              color: Colors.yellow[100],
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                leading: Icon(Icons.map, color: Colors.yellow[800]),
-                title: Text(
-                  'Ver Mapa',
-                  style: TextStyle(
-                    fontSize: Platform.isIOS ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                trailing: Icon(Icons.arrow_forward_ios, color: Colors.yellow[800]),
-                onTap: () {
-                  // Navega a la pantalla del mapa
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MapScreen()),
-                  );
-                },
-              ),
-            ),
-            // --- FIN: Botón para el Mapa --
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

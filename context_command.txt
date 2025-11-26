@@ -1,0 +1,11 @@
+(
+    echo Archivos del proyecto:
+    echo ======================
+    for /R lib %%f in (*.dart) do (
+        echo --- File: %%f ---
+        type "%%f"
+        echo.
+    )
+    echo --- File: pubspec.yaml ---
+    type "pubspec.yaml"
+) > project_context.txt

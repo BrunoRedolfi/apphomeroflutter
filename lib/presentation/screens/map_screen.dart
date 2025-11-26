@@ -61,11 +61,13 @@ class _MapScreenState extends State<MapScreen> {
                   onPressed: () {
                     // Lógica para hacer zoom in
                     final currentScale = _transformationController.value.getMaxScaleOnAxis();
-                    if (currentScale < _maxScale) {
-                      final newScale = currentScale * 1.2; // Aumenta un 20%
-                      final zoomedMatrix = Matrix4.identity()..scale(newScale);
-                      _transformationController.value = zoomedMatrix;
-                    }
+                    final newScale = (currentScale * 1.2).clamp(_minScale, _maxScale);
+                    final zoomedMatrix = Matrix4.identity()
+                      ..translate(context.size!.width / 2, context.size!.height / 2)
+                      ..scale(newScale)
+                      ..translate(-context.size!.width / 2, -context.size!.height / 2);
+
+                    _transformationController.value = zoomedMatrix;
                   },
                 ),
                 const SizedBox(height: 8),
@@ -77,11 +79,13 @@ class _MapScreenState extends State<MapScreen> {
                   onPressed: () {
                     // Lógica para hacer zoom out
                     final currentScale = _transformationController.value.getMaxScaleOnAxis();
-                    if (currentScale > _minScale) {
-                      final newScale = currentScale * 0.8; // Reduce un 20%
-                      final zoomedMatrix = Matrix4.identity()..scale(newScale);
-                      _transformationController.value = zoomedMatrix;
-                    }
+                    final newScale = (currentScale * 0.8).clamp(_minScale, _maxScale);
+                    final zoomedMatrix = Matrix4.identity()
+                      ..translate(context.size!.width / 2, context.size!.height / 2)
+                      ..scale(newScale)
+                      ..translate(-context.size!.width / 2, -context.size!.height / 2);
+
+                    _transformationController.value = zoomedMatrix;
                   },
                 ),
               ],

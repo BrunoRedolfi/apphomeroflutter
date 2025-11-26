@@ -33,7 +33,7 @@ class BeerMenuScreen extends StatelessWidget {
                   final productFromCatalog = state.catalog[index];
                   
                   final cartItem = state.cartItems.firstWhere(
-                    (item) => item.name == productFromCatalog.name,
+                    (item) => item.id == productFromCatalog.id,
                     orElse: () => productFromCatalog.copyWith(quantity: 0),
                   );
 

@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   // Hacemos la clase un Singleton para tener una única instancia en toda la app.
@@ -39,12 +40,21 @@ class NotificationService {
 
   // Método para programar notificaciones periódicas
   Future<void> scheduleHourlyWaterReminder() async {
-    // Pide permiso para notificaciones en Android 13+
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-
+    // 1. Pide permiso para notificaciones generales (Android 13+)
+    final notificationsPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await notificationsPlugin?.requestNotificationsPermission();
+ 
+    // 2. Pide permiso para alarmas exactas (Android 12+)
+    // Usamos el paquete permission_handler para esto.
+    final PermissionStatus status = await Permission.scheduleExactAlarm.request();
+    if (!status.isGranted) {
+      // El usuario no concedió el permiso.
+      // Aquí podrías mostrar un mensaje o simplemente no programar la notificación.
+      print("Permiso para alarmas exactas denegado.");
+      return; // Salimos del método si no tenemos permiso.
+    }
+ 
     // Detalles de la notificación
     const AndroidNotificationDetails androidNotificationDetails =
         AndroidNotificationDetails(
@@ -62,7 +72,7 @@ class NotificationService {
       0, // ID de la notificación
       "¡Hora de hidratarse!",
       "Mmm... agüita. ¡Bebe un vaso de agua!",
-      RepeatInterval.everyMinute, // ¡Se repite cada hora!
+      RepeatInterval.everyMinute, // Intervalo de repeticion
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // <-- ¡Este es el cambio!
     );

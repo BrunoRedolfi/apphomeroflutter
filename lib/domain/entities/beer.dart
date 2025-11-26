@@ -1,25 +1,36 @@
 import 'package:equatable/equatable.dart';
 
 class Beer extends Equatable {
+  final String id; // <-- CAMBIO: Añadido
   final String name;
+  final double price;
   final String image;
   final int quantity;
 
   const Beer({
+    required this.id, // <-- CAMBIO: Añadido
     required this.name,
+    required this.price,
     required this.image,
     this.quantity = 0,
   });
 
-  // Creamos una copia del objeto con valores actualizados, promoviendo la inmutabilidad
-  Beer copyWith({int? quantity}) {
+  Beer copyWith({
+    String? id,
+    String? name,
+    double? price,
+    String? image,
+    int? quantity,
+  }) {
     return Beer(
-      name: name,
-      image: image,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      image: image ?? this.image,
       quantity: quantity ?? this.quantity,
     );
   }
 
   @override
-  List<Object?> get props => [name, image, quantity];
+  List<Object?> get props => [id, name, price, image, quantity];
 }

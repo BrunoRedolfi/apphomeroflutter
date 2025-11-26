@@ -1,28 +1,28 @@
 import 'package:equatable/equatable.dart';
 
 class BeerCounterState extends Equatable {
-  final bool isActive;
   final int beerCount;
+  final bool isActive;
+  final bool showHomerAlert; // <-- NUEVA PROPIEDAD
 
   const BeerCounterState({
-    required this.isActive,
-    required this.beerCount,
+    this.beerCount = 0,
+    this.isActive = false,
+    this.showHomerAlert = false, // <-- VALOR POR DEFECTO
   });
 
-  factory BeerCounterState.initial() {
-    return const BeerCounterState(isActive: false, beerCount: 0);
-  }
-
   BeerCounterState copyWith({
-    bool? isActive,
     int? beerCount,
+    bool? isActive,
+    bool? showHomerAlert,
   }) {
     return BeerCounterState(
-      isActive: isActive ?? this.isActive,
       beerCount: beerCount ?? this.beerCount,
+      isActive: isActive ?? this.isActive,
+      showHomerAlert: showHomerAlert ?? this.showHomerAlert,
     );
   }
 
   @override
-  List<Object> get props => [isActive, beerCount];
+  List<Object> get props => [beerCount, isActive, showHomerAlert];
 }

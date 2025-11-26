@@ -22,7 +22,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       final products = await _beerRepository.getBeerCatalog();
       emit(CartLoaded(catalog: products, cartItems: []));
     } catch (_) {
-      // Manejar error en un futuro
+      emit(const CartError("D'oh! No se pudieron cargar las cervezas."));
     }
   }
 
@@ -30,7 +30,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     final state = this.state;
     if (state is CartLoaded) {
       final itemIndex =
-          state.cartItems.indexWhere((item) => item.name == event.beer.name);
+          state.cartItems.indexWhere((item) => item.id == event.beer.id);
       List<Beer> updatedCart = List.from(state.cartItems);
 
       if (itemIndex != -1) {
@@ -50,7 +50,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     final state = this.state;
     if (state is CartLoaded) {
       final itemIndex =
-          state.cartItems.indexWhere((item) => item.name == event.beer.name);
+          state.cartItems.indexWhere((item) => item.id == event.beer.id);
       List<Beer> updatedCart = List.from(state.cartItems);
 
       if (itemIndex != -1 && updatedCart[itemIndex].quantity > 1) {

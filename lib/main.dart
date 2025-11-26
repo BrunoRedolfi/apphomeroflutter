@@ -1,21 +1,25 @@
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:proyecto_homero/data/repositories/order_repository_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto_homero/data/datasources/beer_remote_datasource.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_bloc.dart';
+import 'package:proyecto_homero/presentation/blocs/orders/orders_bloc.dart';
+import 'package:proyecto_homero/presentation/blocs/orders/orders_event.dart';
 import 'package:proyecto_homero/presentation/services/notification_service.dart';
 import 'package:proyecto_homero/presentation/services/settings_service.dart';
 import 'presentation/blocs/cart/cart_bloc.dart';
 import 'presentation/blocs/cart/cart_event.dart';
 import 'data/repositories/beer_repository_impl.dart';
 import 'domain/repositories/beer_repository.dart';
+import 'domain/repositories/order_repository.dart';
 import 'presentation/screens/settings_page.dart';
 import 'presentation/screens/beer_menu_screen.dart';
-import 'presentation/screens/favorites_page.dart';
+import 'presentation/screens/orders_page.dart';
+import 'firebase_options.dart';
 import 'presentation/screens/extras_page.dart';
 
 Future<void> main() async {
@@ -41,21 +45,36 @@ class TabernadeMoeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<BeerRepository>(
-      create: (context) => BeerRepositoryImpl(
-        remoteDataSource: BeerRemoteDataSourceImpl(
-          // Le pasamos la instancia de Firestore
-          firestore: FirebaseFirestore.instance,
+    // Usamos MultiRepositoryProvider para proveer varios repositorios
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<BeerRepository>(
+          create: (context) => BeerRepositoryImpl(
+            remoteDataSource: BeerRemoteDataSourceImpl(
+              firestore: FirebaseFirestore.instance,
+            ),
+          ),
         ),
-      ),
+        RepositoryProvider<OrderRepository>(
+          // CORRECCIÓN CRÍTICA: Debemos proveer la implementación concreta.
+          create: (context) => OrderRepositoryImpl(),
+        ),
+      ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
             create: (context) => CartBloc(
+              // El BLoC lee la abstracción, no la implementación.
               beerRepository: context.read<BeerRepository>(),
             )..add(CartProductsLoaded()),
           ),
           BlocProvider(create: (context) => BeerCounterBloc()),
+          // Añadimos el OrdersBloc aquí para que esté disponible en toda la app
+          BlocProvider(
+            create: (context) =>
+                OrdersBloc(orderRepository: context.read<OrderRepository>())
+              ..add(OrdersLoaded()), // Cargamos los pedidos al iniciar
+          ),
         ],
         child: MaterialApp(
           title: 'La App de la Taberna de Moe',
@@ -89,13 +108,6 @@ class AppNavItem {
   });
 }
 
-final List<AppNavItem> mainNavItems = [
-  const AppNavItem(icon: Icons.local_bar, label: 'Menú Duff', page: BeerMenuScreen()),
-  AppNavItem(icon: Icons.favorite, label: 'Favoritos', page: FavoritesPage()),
-  AppNavItem(icon: Icons.star, label: 'Extras', page: ExtrasPage()),
-  const AppNavItem(icon: Icons.settings, label: 'Configuración', page: SettingsPage()),
-];
-
 class AdaptiveNavigationScaffold extends StatefulWidget {
   const AdaptiveNavigationScaffold({super.key});
 
@@ -104,6 +116,14 @@ class AdaptiveNavigationScaffold extends StatefulWidget {
 }
 
 class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold> {
+  // MEJORA: La lista de navegación ahora es parte del estado del widget.
+  static const List<AppNavItem> _navItems = [
+    AppNavItem(icon: Icons.local_bar, label: 'Menú Duff', page: BeerMenuScreen()),
+    AppNavItem(icon: Icons.receipt_long, label: 'Pedidos', page: OrdersPage()),
+    AppNavItem(icon: Icons.star, label: 'Extras', page: ExtrasPage()),
+    AppNavItem(icon: Icons.settings, label: 'Configuración', page: SettingsPage()),
+  ];
+
   int _selectedIndex = 0;
 
   @override
@@ -112,7 +132,7 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(mainNavItems[_selectedIndex].label),
+        title: Text(_navItems[_selectedIndex].label),
         backgroundColor: Colors.yellow[800],
         foregroundColor: Colors.black,
       ),
@@ -124,7 +144,7 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
               selectedIndex: _selectedIndex,
               onDestinationSelected: (index) => setState(() => _selectedIndex = index),
               labelType: NavigationRailLabelType.all,
-              destinations: mainNavItems
+              destinations: _navItems
                   .map(
                     (item) => NavigationRailDestination(
                       icon: Icon(item.icon),
@@ -133,7 +153,7 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
                   )
                   .toList(),
             ),
-          Expanded(child: mainNavItems[_selectedIndex].page),
+          Expanded(child: _navItems[_selectedIndex].page),
         ],
       ),
       bottomNavigationBar: isCompact
@@ -141,7 +161,7 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
               type: BottomNavigationBarType.fixed,
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
-              items: mainNavItems
+              items: _navItems
                   .map(
                     (item) => BottomNavigationBarItem(
                       icon: Icon(item.icon),
