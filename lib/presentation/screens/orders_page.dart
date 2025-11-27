@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:proyecto_homero/domain/entities/beer.dart';
-import 'package:proyecto_homero/presentation/blocs/cart/cart_bloc.dart';
-import 'package:proyecto_homero/presentation/blocs/cart/cart_state.dart';
+import 'package:proyecto_homero/domain/entities/beer.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_bloc.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_state.dart';
 import '../../domain/entities/favorite_order.dart';
 import '../../domain/entities/order.dart';
 import '../blocs/orders/orders_bloc.dart';
-
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.yellow[300],
+      backgroundColor: Colors.yellow[600],
       body: BlocBuilder<OrdersBloc, OrdersState>(
         builder: (context, ordersState) {
           if (ordersState is OrdersLoading) {
@@ -48,26 +45,32 @@ class OrdersPage extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       children: [
         if (currentCartItems.isNotEmpty) ...[
-          _buildSectionTitle("DECIDIENDO"),
+          _buildSectionIcon(Icons.hourglass_top_rounded, Colors.orange),
           _buildCurrentOrderCard(context, currentCartItems),
           const SizedBox(height: 24),
         ],
         if (ordersState.favoriteOrders.isNotEmpty) ...[
-          _buildSectionTitle('FAVORITOS'),
-          ...ordersState.favoriteOrders.map(
-            (fav) => _buildFavoriteCard(context, fav),
+          _buildSectionIcon(Icons.star, Colors.amber),
+          // Usamos asMap().entries para obtener el índice de cada favorito
+          ...ordersState.favoriteOrders.asMap().entries.map(
+            (entry) {
+              return _buildFavoriteCard(context, entry.value, entry.key);
+            },
           ),
           const SizedBox(height: 24),
         ],
-        _buildSectionTitle('PEDIDOS'),
+        _buildSectionIcon(Icons.receipt_long, Colors.blueAccent),
         if (ordersState.activeOrders.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text("Aún no tienes pedidos.", textAlign: TextAlign.center),
           )
         else
-          ...ordersState.activeOrders.map(
-            (order) => _buildOrderCard(context, order),
+          ...ordersState.activeOrders.asMap().entries.map(
+            (entry) {
+              // Pasamos el índice para poder numerar los pedidos
+              return _buildOrderCard(context, entry.value, entry.key);
+            },
           ),
       ],
     );
@@ -118,58 +121,54 @@ class OrdersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionIcon(IconData icon, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 50,
+          color: color,
+        ),
       ),
     );
   }
 
-  Widget _buildFavoriteCard(BuildContext context, FavoriteOrder favorite) {
+  Widget _buildFavoriteCard(BuildContext context, FavoriteOrder favorite, int index) {
     return Card(
+      color: Colors.yellow[200],
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: const Icon(Icons.star, color: Colors.amber),
-        title: Text(favorite.name),
+        // Usamos el índice + 1 para mostrar "1", "2", etc.
+        title: Text(
+          'Favorito #${index + 1}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
         subtitle: Text('🍺x${favorite.totalItems}'),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'repeat') {
-              context.read<OrdersBloc>().add(FavoriteOrderRepeated(favorite));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('"${favorite.name}" agregado!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } else if (value == 'delete') {
-              context.read<OrdersBloc>().add(FavoriteOrderDeleted(favorite.id));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('"${favorite.name}" eliminado.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            const PopupMenuItem<String>(
-              value: 'repeat',
-              child: ListTile(
-                leading: Icon(Icons.repeat),
-                title: Text('Repetir Pedido'),
-              ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Botón para repetir el pedido
+            IconButton(
+              icon: const Icon(Icons.repeat, color: Colors.green, size: 30),
+              onPressed: () {
+                context.read<OrdersBloc>().add(FavoriteOrderRepeated(favorite));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Favorito #${index + 1} agregado al pedido!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
             ),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete, color: Colors.red),
-                title: Text('Eliminar Favorito'),
-              ),
+            // Botón para eliminar el favorito
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red, size: 30),
+              onPressed: () {
+                context.read<OrdersBloc>().add(FavoriteOrderDeleted(favorite.id));
+              },
             ),
           ],
         ),
@@ -177,85 +176,63 @@ class OrdersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderCard(BuildContext context, Order order) {
+  Widget _buildOrderCard(BuildContext context, Order order, int index) {
     return Card(
+      color: Colors.yellow[200],
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: Icon(
-          order.status == OrderStatus.llegando
-              ? Icons.delivery_dining
-              : Icons.receipt_long,
+          order.status == OrderStatus.llegando ? Icons.delivery_dining : Icons.receipt_long,
           color: Colors.blueAccent,
         ),
         title: Text(
-          'Pedido del ${DateFormat('dd/MM/yyyy HH:mm').format(order.date)}',
+          'Pedido #${index + 1}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        subtitle: Text('${order.totalItems} productos - ${order.statusText}'),
-        trailing: PopupMenuButton<String>(
-          // El menú de opciones para los pedidos del historial
-          onSelected: (value) {
-            if (value == 'favorite') {
-              context.read<OrdersBloc>().add(OrderAddedToFavorites(order));
-            } else if (value == 'cancel') {
-              context.read<OrdersBloc>().add(
-                OrderStatusChanged(order.id, OrderStatus.cancelado),
-              );
-            } else if (value == 'confirm') {
-              context.read<OrdersBloc>().add(
-                OrderStatusChanged(order.id, OrderStatus.entregado),
-              );
-            } else if (value == 'delete') {
-              context.read<OrdersBloc>().add(OrderDeleted(order.id));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pedido eliminado del historial.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            const PopupMenuItem<String>(
-              value: 'favorite',
-              child: ListTile(
-                leading: Icon(Icons.star_border),
-                title: Text('Añadir a favoritos'),
-              ),
+        subtitle: Text('🍺x${order.totalItems} - ${order.statusText}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Botón para añadir a favoritos (siempre visible)
+            IconButton(
+              icon: const Icon(Icons.star_border, color: Colors.amber),
+              onPressed: () {
+                context.read<OrdersBloc>().add(OrderAddedToFavorites(order));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pedido guardado en favoritos!'), backgroundColor: Colors.amber),
+                );
+              },
             ),
-            // --- INICIO DEL CAMBIO ---
-            // Solo mostramos la opción de cancelar si el pedido está en un estado cancelable.
+
+            // Botones condicionales para pedidos activos
             if (order.status == OrderStatus.enProceso ||
                 order.status == OrderStatus.llegando)
-              const PopupMenuItem<String>(
-                value: 'cancel',
-                child: ListTile(
-                  leading: Icon(Icons.cancel_outlined, color: Colors.red),
-                  title: Text('Cancelar pedido'),
+              ...[
+                // Botón para cancelar
+                IconButton(
+                  icon: const Icon(Icons.cancel_outlined, color: Colors.red),
+                  onPressed: () => context.read<OrdersBloc>().add(OrderStatusChanged(order.id, OrderStatus.cancelado)),
                 ),
-              ),
-            // --- INICIO DEL CAMBIO ---
-            // Solo mostramos la opción de confirmar si el pedido no está ya entregado o cancelado.
-            if (order.status == OrderStatus.enProceso ||
-                order.status == OrderStatus.llegando)
-              const PopupMenuItem<String>(
-                value: 'confirm',
-                child: ListTile(
-                  leading: Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.green,
-                  ),
-                  title: Text('Confirmar entrega'),
+                // Botón para confirmar entrega
+                IconButton(
+                  icon: const Icon(Icons.check_circle_outline, color: Colors.green),
+                  onPressed: () => context.read<OrdersBloc>().add(OrderStatusChanged(order.id, OrderStatus.entregado)),
                 ),
+              ],
+
+            // Botón para eliminar pedidos finalizados
+            if (order.status == OrderStatus.entregado ||
+                order.status == OrderStatus.cancelado)
+              IconButton(
+                icon: const Icon(Icons.delete_forever, color: Colors.red),
+                onPressed: () {
+                  context.read<OrdersBloc>().add(OrderDeleted(order.id));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Pedido eliminado del historial.'), backgroundColor: Colors.red),
+                  );
+                },
               ),
-            const PopupMenuDivider(),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete_forever, color: Colors.red),
-                title: Text('Eliminar del historial'),
-              ),
-            ),
           ],
         ),
       ),

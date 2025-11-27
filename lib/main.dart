@@ -19,7 +19,7 @@ import 'presentation/blocs/cart/cart_event.dart';
 import 'data/repositories/beer_repository_impl.dart';
 import 'domain/repositories/beer_repository.dart';
 import 'presentation/screens/settings_page.dart';
-import 'presentation/screens/beer_menu_screen.dart';
+import 'presentation/screens/menu_screen.dart';
 import 'presentation/screens/orders_page.dart';
 import 'firebase_options.dart';
 import 'presentation/screens/extras_page.dart';
@@ -130,7 +130,7 @@ class _AdaptiveNavigationScaffoldState
     AppNavItem(
       icon: Icons.local_bar,
       label: 'Menú Duff',
-      page: BeerMenuScreen(),
+      page: MenuScreen(),
     ),
     AppNavItem(icon: Icons.receipt_long, label: 'Pedidos', page: OrdersPage()),
     AppNavItem(icon: Icons.star, label: 'Extras', page: ExtrasPage()),

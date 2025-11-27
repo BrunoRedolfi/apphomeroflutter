@@ -5,8 +5,8 @@ import '../blocs/cart/cart_event.dart';
 import '../blocs/cart/cart_state.dart';
 import '../../domain/entities/beer.dart';
 
-class BeerMenuScreen extends StatelessWidget {
-  const BeerMenuScreen({super.key});
+class MenuScreen extends StatelessWidget {
+  const MenuScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
