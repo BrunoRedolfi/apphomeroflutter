@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart';
 import 'package:proyecto_homero/domain/entities/beer.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_bloc.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_state.dart';
 import '../../domain/entities/favorite_order.dart';
+import '../blocs/beer_counter/beer_counter_bloc.dart';
 import '../../domain/entities/order.dart';
 import '../blocs/orders/orders_bloc.dart';
 class OrdersPage extends StatelessWidget {
@@ -63,13 +66,20 @@ class OrdersPage extends StatelessWidget {
         if (ordersState.activeOrders.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16.0),
-            child: Text("Aún no tienes pedidos.", textAlign: TextAlign.center),
+            child: Text("Aún no tienes pedidos.", textAlign: TextAlign.center), 
           )
         else
           ...ordersState.activeOrders.asMap().entries.map(
             (entry) {
               // Pasamos el índice para poder numerar los pedidos
-              return _buildOrderCard(context, entry.value, entry.key);
+              final order = entry.value;
+              final index = entry.key;
+              // Si el pedido está en proceso, muestra el timer. Si no, la tarjeta normal.
+              if (order.status == OrderStatus.enProceso || order.status == OrderStatus.llegando) {
+                return OrderTimerCard(order: order, index: index);
+              } else {
+                return _buildOrderCard(context, order, index);
+              }
             },
           ),
       ],
@@ -102,22 +112,74 @@ class OrdersPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Center(
-              child: SizedBox(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow[500],
-                  ),
-                  icon: const Icon(Icons.check, size: 50),
-                  label: const Text(''),
-                  onPressed: () {
-                    context.read<OrdersBloc>().add(OrderConfirmed());
-                  },
-                ),
+              child: IconButton(
+                icon: const Icon(Icons.wallet_outlined, size: 60, color: Colors.black54),
+                onPressed: () => _showPaymentDialog(context),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showPaymentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.yellow[400],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- SECCIÓN PAGAR AHORA ---
+              const Text("PAGAR AHORA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              IconButton(
+                icon: const Icon(Icons.credit_card, size: 60, color: Colors.black54),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  context.read<OrdersBloc>().add(OrderConfirmed());
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('¡Pagado con tarjeta!'), backgroundColor: Colors.green),
+                  );
+                },
+              ),
+              const Divider(height: 30, thickness: 2),
+              // --- SECCIÓN PAGAR LUEGO ---
+              const Text("PAGAR LUEGO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  IconButton(
+                    icon: const Icon(Icons.payments_outlined, size: 60, color: Colors.black54),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      context.read<OrdersBloc>().add(OrderConfirmed());
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('¡Anotado! Pagarás en efectivo.'), backgroundColor: Colors.blue),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.credit_card, size: 60, color: Colors.black54),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      context.read<OrdersBloc>().add(OrderConfirmed());
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('¡Anotado! Pagarás con tarjeta después.'), backgroundColor: Colors.blue),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -234,6 +296,96 @@ class OrdersPage extends StatelessWidget {
                 },
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- NUEVO WIDGET CON ESTADO PARA EL TEMPORIZADOR DEL PEDIDO ---
+class OrderTimerCard extends StatefulWidget {
+  final Order order;
+  final int index;
+
+  const OrderTimerCard({super.key, required this.order, required this.index});
+
+  @override
+  State<OrderTimerCard> createState() => _OrderTimerCardState();
+}
+
+class _OrderTimerCardState extends State<OrderTimerCard> {
+  Timer? _timer;
+  Duration _remainingTime = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    final endTime = widget.order.date.add(const Duration(minutes: 5));
+    _remainingTime = endTime.difference(DateTime.now());
+
+    if (_remainingTime.isNegative) {
+      // Si el tiempo ya pasó, marcamos como entregado inmediatamente.
+      _onTimerFinish();
+    } else {
+      // Si no, iniciamos un timer que se actualiza cada segundo.
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _remainingTime = endTime.difference(DateTime.now());
+        });
+
+        if (_remainingTime.isNegative) {
+          _onTimerFinish();
+        }
+      });
+    }
+  }
+
+  void _onTimerFinish() {
+    _timer?.cancel();
+    // Solo reproduce el sonido si está activado en la configuración
+    if (context.read<BeerCounterBloc>().state.isWoohooSoundEnabled) {
+      final player = AudioPlayer();
+      // Asegúrate de tener este archivo en assets/sounds/
+      player.play(AssetSource('sounds/woohoo.mp3'));
+    }
+
+    // Actualiza el estado del pedido a 'entregado'
+    context.read<OrdersBloc>().add(OrderStatusChanged(widget.order.id, OrderStatus.entregado));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Es crucial cancelar el timer para evitar memory leaks.
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = _remainingTime.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = _remainingTime.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    return Card(
+      color: Colors.yellow[400],
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        leading: const Icon(Icons.delivery_dining, color: Colors.blueAccent, size: 40),
+        title: Text(
+          'Pedido #${widget.index + 1}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        subtitle: Text('🍺x${widget.order.totalItems} - Llegando...'),
+        trailing: Text(
+          '$minutes:$seconds',
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'monospace', // Para que los números no "salten"
+          ),
         ),
       ),
     );

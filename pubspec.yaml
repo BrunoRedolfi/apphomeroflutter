@@ -72,6 +72,7 @@ flutter:
     - assets/mapa_springfield.jpg
     - assets/sounds/marge.mp3
     - assets/sounds/water_pour.wav
+    - assets/sounds/woohoo.mp3
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

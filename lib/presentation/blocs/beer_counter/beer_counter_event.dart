@@ -15,4 +15,8 @@ class BeerCounterToggled extends BeerCounterEvent {
   List<Object> get props => [isActive];
 }
 
+// Evento para incrementar el contador de cervezas.
 class BeerCounterIncremented extends BeerCounterEvent {}
+
+// Evento para activar/desactivar el sonido "Woohoo".
+class WoohooSoundToggled extends BeerCounterEvent {}

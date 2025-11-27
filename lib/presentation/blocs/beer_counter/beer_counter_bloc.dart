@@ -5,6 +5,7 @@ import 'beer_counter_state.dart';
 class BeerCounterBloc extends HydratedBloc<BeerCounterEvent, BeerCounterState> {
   BeerCounterBloc() : super(const BeerCounterState()) {
     on<BeerCounterIncremented>(_onIncremented);
+    on<WoohooSoundToggled>(_onWoohooSoundToggled);
   }
 
   void _onIncremented(
@@ -27,6 +28,11 @@ class BeerCounterBloc extends HydratedBloc<BeerCounterEvent, BeerCounterState> {
       showHomerAlert: shouldShowAlert,
       showWaterReminder: shouldShowWaterReminder,
     ));
+  }
+
+  void _onWoohooSoundToggled(
+      WoohooSoundToggled event, Emitter<BeerCounterState> emit) {
+    emit(state.copyWith(isWoohooSoundEnabled: !state.isWoohooSoundEnabled));
   }
 
   // --- MÉTODOS REQUERIDOS POR HYDRATED BLOC ---
