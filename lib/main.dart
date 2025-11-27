@@ -1,5 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:proyecto_homero/data/repositories/auth_repository_impl.dart';
 import 'package:proyecto_homero/data/repositories/order_repository_impl.dart';
@@ -12,8 +14,6 @@ import 'package:proyecto_homero/domain/repositories/order_repository.dart';
 import 'package:proyecto_homero/presentation/blocs/auth/auth_bloc.dart';
 import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_bloc.dart';
 import 'package:proyecto_homero/presentation/blocs/orders/orders_bloc.dart';
-import 'package:proyecto_homero/presentation/services/notification_service.dart';
-import 'package:proyecto_homero/presentation/services/settings_service.dart';
 import 'presentation/blocs/cart/cart_bloc.dart';
 import 'presentation/blocs/cart/cart_event.dart';
 import 'data/repositories/beer_repository_impl.dart';
@@ -28,18 +28,13 @@ Future<void> main() async {
   // Asegura que los bindings de Flutter estén inicializados antes de cualquier otra cosa.
   WidgetsFlutterBinding.ensureInitialized();
   // Inicializa Firebase usando las opciones generadas por FlutterFire CLI.
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+
+  // Prepara el almacenamiento para HydratedBloc
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: await getApplicationDocumentsDirectory(),
   );
 
-  // Inicializamos nuestro servicio de notificaciones
-  await NotificationService().init();
-
-  // Comprobamos si el recordatorio debe estar activo al iniciar
-  final settingsService = SettingsService();
-  if (await settingsService.getWaterReminder()) {
-    await NotificationService().scheduleHourlyWaterReminder();
-  }
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const TabernadeMoeApp());
 }
 
@@ -59,7 +54,8 @@ class TabernadeMoeApp extends StatelessWidget {
           ),
         ),
         RepositoryProvider<OrderRepository>(
-          create: (context) => OrderRepositoryImpl(firestore: FirebaseFirestore.instance),
+          create: (context) =>
+              OrderRepositoryImpl(firestore: FirebaseFirestore.instance),
         ),
         RepositoryProvider<AuthRepository>(
           create: (context) => AuthRepositoryImpl(),
@@ -68,14 +64,15 @@ class TabernadeMoeApp extends StatelessWidget {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (context) => AuthBloc(
-              authRepository: context.read<AuthRepository>(),
-            )..add(AuthAnonymousSignInRequested()), // Solicitamos el login anónimo al inicio
+            create: (context) =>
+                AuthBloc(authRepository: context.read<AuthRepository>())..add(
+                  AuthAnonymousSignInRequested(),
+                ), // Solicitamos el login anónimo al inicio
           ),
           BlocProvider(
-            create: (context) => CartBloc(
-              beerRepository: context.read<BeerRepository>(),
-            )..add(CartProductsLoaded()),
+            create: (context) =>
+                CartBloc(beerRepository: context.read<BeerRepository>())
+                  ..add(CartProductsLoaded()),
           ),
           BlocProvider(create: (context) => BeerCounterBloc()),
           // Añadimos el OrdersBloc aquí para que esté disponible en toda la app
@@ -93,9 +90,8 @@ class TabernadeMoeApp extends StatelessWidget {
             primarySwatch: Colors.yellow,
             textTheme: Platform.isIOS
                 ? TextTheme(
-                    bodyMedium: CupertinoThemeData().textTheme.textStyle.copyWith(
-                      fontSize: 16,
-                    ),
+                    bodyMedium: CupertinoThemeData().textTheme.textStyle
+                        .copyWith(fontSize: 16),
                   )
                 : null,
             visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -123,16 +119,26 @@ class AdaptiveNavigationScaffold extends StatefulWidget {
   const AdaptiveNavigationScaffold({super.key});
 
   @override
-  State<AdaptiveNavigationScaffold> createState() => _AdaptiveNavigationScaffoldState();
+  State<AdaptiveNavigationScaffold> createState() =>
+      _AdaptiveNavigationScaffoldState();
 }
 
-class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold> {
+class _AdaptiveNavigationScaffoldState
+    extends State<AdaptiveNavigationScaffold> {
   // MEJORA: La lista de navegación ahora es parte del estado del widget.
   static const List<AppNavItem> _navItems = [
-    AppNavItem(icon: Icons.local_bar, label: 'Menú Duff', page: BeerMenuScreen()),
+    AppNavItem(
+      icon: Icons.local_bar,
+      label: 'Menú Duff',
+      page: BeerMenuScreen(),
+    ),
     AppNavItem(icon: Icons.receipt_long, label: 'Pedidos', page: OrdersPage()),
     AppNavItem(icon: Icons.star, label: 'Extras', page: ExtrasPage()),
-    AppNavItem(icon: Icons.settings, label: 'Configuración', page: SettingsPage()),
+    AppNavItem(
+      icon: Icons.settings,
+      label: 'Configuración',
+      page: SettingsPage(),
+    ),
   ];
 
   int _selectedIndex = 0;
@@ -142,6 +148,7 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
+      backgroundColor: Colors.yellow[300],
       appBar: AppBar(
         title: Text(_navItems[_selectedIndex].label),
         backgroundColor: Colors.yellow[800],
@@ -153,8 +160,14 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
             NavigationRail(
               backgroundColor: Colors.yellow[700],
               selectedIndex: _selectedIndex,
-              onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-              labelType: NavigationRailLabelType.all,
+              onDestinationSelected: (index) =>
+                  setState(() => _selectedIndex = index),
+              labelType: NavigationRailLabelType.none,
+              selectedIconTheme: const IconThemeData(
+                size: 50,
+                color: Colors.black,
+              ),
+              unselectedIconTheme: const IconThemeData(size: 50),
               destinations: _navItems
                   .map(
                     (item) => NavigationRailDestination(
@@ -172,6 +185,11 @@ class _AdaptiveNavigationScaffoldState extends State<AdaptiveNavigationScaffold>
               type: BottomNavigationBarType.fixed,
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
+              iconSize: 50, // Tamaño de los iconos (Por defecto es 24.0)
+              selectedFontSize: 18, // Tamaño del texto activo
+              unselectedFontSize: 14,
+              showSelectedLabels: false, // Oculta texto seleccionado
+              showUnselectedLabels: false, // Oculta texto inactivo
               items: _navItems
                   .map(
                     (item) => BottomNavigationBarItem(

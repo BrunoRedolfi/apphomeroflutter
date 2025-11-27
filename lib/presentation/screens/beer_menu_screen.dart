@@ -13,7 +13,9 @@ class BeerMenuScreen extends StatelessWidget {
     return BlocBuilder<CartBloc, CartState>(
       builder: (context, state) {
         if (state is CartLoading) {
-          return const Center(child: CircularProgressIndicator(color: Colors.brown));
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.brown),
+          );
         }
         if (state is CartLoaded) {
           return LayoutBuilder(
@@ -31,7 +33,7 @@ class BeerMenuScreen extends StatelessWidget {
                 itemCount: state.catalog.length,
                 itemBuilder: (context, index) {
                   final productFromCatalog = state.catalog[index];
-                  
+
                   final cartItem = state.cartItems.firstWhere(
                     (item) => item.id == productFromCatalog.id,
                     orElse: () => productFromCatalog.copyWith(quantity: 0),
@@ -65,9 +67,14 @@ class BeerMenuScreen extends StatelessWidget {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 50,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
-        backgroundColor: Colors.yellow[700],
+        backgroundColor: Colors.yellow[400],
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -92,14 +99,16 @@ class BeerMenuScreen extends StatelessWidget {
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.brown,
-                    ),
+                    child: CircularProgressIndicator(color: Colors.amber),
                   );
                 },
                 // Muestra un icono si hay un error al cargar la imagen
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.no_photography, color: Colors.red, size: 50);
+                  return const Icon(
+                    Icons.no_photography,
+                    color: Colors.red,
+                    size: 50,
+                  );
                 },
               ),
             ),
@@ -107,7 +116,7 @@ class BeerMenuScreen extends StatelessWidget {
               padding: EdgeInsets.all(12.0),
               child: Text(
                 beer.name,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -135,13 +144,15 @@ class BeerMenuScreen extends StatelessWidget {
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.brown,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.brown),
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.no_photography, color: Colors.red, size: 50);
+                    return const Icon(
+                      Icons.no_photography,
+                      color: Colors.red,
+                      size: 50,
+                    );
                   },
                 ),
               ),
@@ -154,15 +165,18 @@ class BeerMenuScreen extends StatelessWidget {
             right: 0,
             child: Container(
               color: Colors.black.withOpacity(0.6),
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
               child: Column(
                 children: [
                   Text(
                     beer.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
+                      fontSize: 30,
+                      color: Colors.yellow,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -170,8 +184,13 @@ class BeerMenuScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.remove_circle, color: Colors.white, size: 30),
-                        onPressed: () => context.read<CartBloc>().add(CartItemRemoved(beer)),
+                        icon: const Icon(
+                          Icons.remove_circle,
+                          color: Colors.yellow,
+                          size: 50,
+                        ),
+                        onPressed: () =>
+                            context.read<CartBloc>().add(CartItemRemoved(beer)),
                       ),
                       Stack(
                         children: <Widget>[
@@ -189,7 +208,7 @@ class BeerMenuScreen extends StatelessWidget {
                           Text(
                             beer.quantity.toString(),
                             style: const TextStyle(
-                              fontSize: 28,
+                              fontSize: 40,
                               fontWeight: FontWeight.bold,
                               color: Colors.yellow,
                             ),
@@ -197,12 +216,19 @@ class BeerMenuScreen extends StatelessWidget {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.add_circle, color: Colors.white, size: 30),
+                        icon: const Icon(
+                          Icons.add_circle,
+                          color: Colors.yellow,
+                          size: 50,
+                        ),
                         onPressed: () {
                           if (beer.quantity < 20) {
                             context.read<CartBloc>().add(CartItemAdded(beer));
                           } else {
-                            _showHomerFeedback(context, "¡Woo-hoo! ¡Suficiente por ahora!");
+                            _showHomerFeedback(
+                              context,
+                              "¡Suficiente por ahora!",
+                            );
                           }
                         },
                       ),
