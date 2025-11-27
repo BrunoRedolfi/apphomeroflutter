@@ -109,7 +109,12 @@ class ExtrasPage extends StatelessWidget {
                     children: [
                       // --- Contador Visual ---
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          IconButton(
+                            icon: const Icon(Icons.refresh, color: Colors.black54, size: 35),
+                            onPressed: () => context.read<BeerCounterBloc>().add(BeerCounterReset()),
+                          ),
                           Icon(Icons.sports_bar, color: Colors.brown[700], size: 50),
                           SizedBox(width: 10),
                           Text(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart';
-import 'package:proyecto_homero/domain/entities/beer.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_bloc.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_state.dart';
+import 'package:proyecto_homero/domain/entities/product.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_bloc.dart';import 'package:proyecto_homero/presentation/blocs/cart/cart_state.dart';
 import '../../domain/entities/favorite_order.dart';
 import '../blocs/beer_counter/beer_counter_bloc.dart';
 import '../../domain/entities/order.dart';
@@ -14,7 +14,7 @@ class OrdersPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.yellow[600],
+      backgroundColor: Colors.yellow[50],
       body: BlocBuilder<OrdersBloc, OrdersState>(
         builder: (context, ordersState) {
           if (ordersState is OrdersLoading) {
@@ -25,7 +25,7 @@ class OrdersPage extends StatelessWidget {
               builder: (context, cartState) {
                 final currentCartItems = (cartState is CartLoaded)
                     ? cartState.cartItems
-                    : <Beer>[];
+                    : <Product>[];
                 return _buildOrdersList(context, ordersState, currentCartItems);
               },
             );
@@ -42,7 +42,7 @@ class OrdersPage extends StatelessWidget {
   Widget _buildOrdersList(
     BuildContext context,
     OrdersLoadSuccess ordersState,
-    List<Beer> currentCartItems,
+    List<Product> currentCartItems,
   ) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -86,24 +86,22 @@ class OrdersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCurrentOrderCard(BuildContext context, List<Beer> items) {
+  Widget _buildCurrentOrderCard(BuildContext context, List<Product> items) {
     final total = items.fold(
       0.0,
       (sum, item) => sum + (item.price * item.quantity),
     );
     return Card(
-      color: Colors.yellow[200],
+      color: Colors.yellow[400],
       elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ...items.map(
-              (item) => Text(
-                '${item.name} x${item.quantity}',
-                style: TextStyle(fontSize: 25),
-              ),
+            Text(
+              _generateOrderSubtitle(items),
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             Text(
@@ -112,8 +110,20 @@ class OrdersPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Center(
-              child: IconButton(
-                icon: const Icon(Icons.wallet_outlined, size: 60, color: Colors.black54),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.yellow[700], // Un amarillo más oscuro
+                  foregroundColor: Colors.black, // Color del texto e icono
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                icon: const Icon(Icons.wallet_outlined, size: 30),
+                label: const Text(
+                  "PAGAR",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () => _showPaymentDialog(context),
               ),
             ),
@@ -183,6 +193,42 @@ class OrdersPage extends StatelessWidget {
     );
   }
 
+  void _showOrderDetailsDialog(BuildContext context, String title, List<Product> items) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.yellow[200],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final icon = item.type == 'food' ? '🍩' : '🍺';
+                return ListTile(
+                  title: Text('$icon ${item.name}', style: const TextStyle(fontSize: 30)),
+                  trailing: Text('x${item.quantity}', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cerrar", style: TextStyle(color: Colors.black)),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Cierra el diálogo
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildSectionIcon(IconData icon, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -198,7 +244,7 @@ class OrdersPage extends StatelessWidget {
 
   Widget _buildFavoriteCard(BuildContext context, FavoriteOrder favorite, int index) {
     return Card(
-      color: Colors.yellow[200],
+      color: Colors.yellow[400],
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
@@ -208,10 +254,17 @@ class OrdersPage extends StatelessWidget {
           'Favorito #${index + 1}',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        subtitle: Text('🍺x${favorite.totalItems}'),
+        subtitle: Text(_generateOrderSubtitle(favorite.items)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // --- NUEVO: Botón para ver detalles ---
+            IconButton(
+              icon: const Icon(Icons.visibility, color: Colors.blueGrey, size: 30),
+              onPressed: () => _showOrderDetailsDialog(
+                  context, 'Favorito #${index + 1}', favorite.items),
+            ),
+            const SizedBox(width: 8),
             // Botón para repetir el pedido
             IconButton(
               icon: const Icon(Icons.repeat, color: Colors.green, size: 30),
@@ -240,7 +293,7 @@ class OrdersPage extends StatelessWidget {
 
   Widget _buildOrderCard(BuildContext context, Order order, int index) {
     return Card(
-      color: Colors.yellow[200],
+      color: Colors.yellow[400],
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
@@ -252,10 +305,17 @@ class OrdersPage extends StatelessWidget {
           'Pedido #${index + 1}',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        subtitle: Text('🍺x${order.totalItems} - ${order.statusText}'),
+        subtitle: Text('${_generateOrderSubtitle(order.items)} - ${order.statusText}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // --- NUEVO: Botón para ver detalles ---
+            IconButton(
+              icon: const Icon(Icons.visibility, color: Colors.blueGrey, size: 30),
+              onPressed: () =>
+                  _showOrderDetailsDialog(context, 'Pedido #${index + 1}', order.items),
+            ),
+            const SizedBox(width: 8),
             // Botón para añadir a favoritos (siempre visible)
             IconButton(
               icon: const Icon(Icons.star_border, color: Colors.amber),
@@ -300,6 +360,22 @@ class OrdersPage extends StatelessWidget {
       ),
     );
   }
+}
+
+// --- FUNCIÓN GLOBAL PARA GENERAR EL SUBTÍTULO ---
+String _generateOrderSubtitle(List<Product> items) {
+  if (items.isEmpty) return '';
+
+  Map<String, int> typeCounts = {};
+  for (var item in items) {
+    typeCounts.update(item.type, (value) => value + item.quantity, ifAbsent: () => item.quantity);
+  }
+
+  return typeCounts.entries.map((entry) {
+    // Asumimos 'beer' como tipo por defecto si no es 'food'
+    final icon = entry.key == 'food' ? '🍩' : '🍺';
+    return '$icon x${entry.value}';
+  }).join(', ');
 }
 
 // --- NUEVO WIDGET CON ESTADO PARA EL TEMPORIZADOR DEL PEDIDO ---
@@ -378,7 +454,7 @@ class _OrderTimerCardState extends State<OrderTimerCard> {
           'Pedido #${widget.index + 1}',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        subtitle: Text('🍺x${widget.order.totalItems} - Llegando...'),
+        subtitle: Text('${_generateOrderSubtitle(widget.order.items)} - Llegando...'),
         trailing: Text(
           '$minutes:$seconds',
           style: const TextStyle(

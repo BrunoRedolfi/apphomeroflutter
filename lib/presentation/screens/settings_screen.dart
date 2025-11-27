@@ -6,14 +6,14 @@ import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_blo
 import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_event.dart';
 import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_state.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedLanguage = 'Español'; // idioma inicial
 
   @override
@@ -80,7 +80,7 @@ class _SettingsPageState extends State<SettingsPage> {
     showModalBottomSheet(
       context: context,
       builder: (_) {
-        final languages = ['Español', 'Inglés', 'El de Lisa'];
+        final languages = ['Americano', 'El de Lisa'];
         return ListView.builder(
           itemCount: languages.length,
           itemBuilder: (context, index) {

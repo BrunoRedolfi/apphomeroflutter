@@ -6,6 +6,7 @@ class BeerCounterBloc extends HydratedBloc<BeerCounterEvent, BeerCounterState> {
   BeerCounterBloc() : super(const BeerCounterState()) {
     on<BeerCounterIncremented>(_onIncremented);
     on<WoohooSoundToggled>(_onWoohooSoundToggled);
+    on<BeerCounterReset>(_onReset);
   }
 
   void _onIncremented(
@@ -33,6 +34,15 @@ class BeerCounterBloc extends HydratedBloc<BeerCounterEvent, BeerCounterState> {
   void _onWoohooSoundToggled(
       WoohooSoundToggled event, Emitter<BeerCounterState> emit) {
     emit(state.copyWith(isWoohooSoundEnabled: !state.isWoohooSoundEnabled));
+  }
+
+  void _onReset(BeerCounterReset event, Emitter<BeerCounterState> emit) {
+    // Reseteamos el contador y los recordatorios.
+    emit(state.copyWith(
+      beerCount: 0,
+      showHomerAlert: false,
+      showWaterReminder: false,
+    ));
   }
 
   // --- MÉTODOS REQUERIDOS POR HYDRATED BLOC ---

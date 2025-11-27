@@ -7,7 +7,7 @@ import 'package:proyecto_homero/data/repositories/auth_repository_impl.dart';
 import 'package:proyecto_homero/data/repositories/order_repository_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:proyecto_homero/data/datasources/beer_remote_datasource.dart';
+import 'package:proyecto_homero/data/datasources/product_remote_datasource.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:proyecto_homero/domain/repositories/auth_repository.dart';
 import 'package:proyecto_homero/domain/repositories/order_repository.dart';
@@ -16,9 +16,9 @@ import 'package:proyecto_homero/presentation/blocs/beer_counter/beer_counter_blo
 import 'package:proyecto_homero/presentation/blocs/orders/orders_bloc.dart';
 import 'presentation/blocs/cart/cart_bloc.dart';
 import 'presentation/blocs/cart/cart_event.dart';
-import 'data/repositories/beer_repository_impl.dart';
-import 'domain/repositories/beer_repository.dart';
-import 'presentation/screens/settings_page.dart';
+import 'data/repositories/product_repository_impl.dart';
+import 'domain/repositories/product_repository.dart';
+import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/menu_screen.dart';
 import 'presentation/screens/orders_page.dart';
 import 'firebase_options.dart';
@@ -46,9 +46,9 @@ class TabernadeMoeApp extends StatelessWidget {
     // Usamos MultiRepositoryProvider para proveer varios repositorios
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<BeerRepository>(
-          create: (context) => BeerRepositoryImpl(
-            remoteDataSource: BeerRemoteDataSourceImpl(
+        RepositoryProvider<ProductRepository>(
+          create: (context) => ProductRepositoryImpl(
+            remoteDataSource: ProductRemoteDataSourceImpl(
               firestore: FirebaseFirestore.instance,
             ),
           ),
@@ -71,7 +71,7 @@ class TabernadeMoeApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) =>
-                CartBloc(beerRepository: context.read<BeerRepository>())
+                CartBloc(beerRepository: context.read<ProductRepository>())
                   ..add(CartProductsLoaded()),
           ),
           BlocProvider(create: (context) => BeerCounterBloc()),
@@ -137,7 +137,7 @@ class _AdaptiveNavigationScaffoldState
     AppNavItem(
       icon: Icons.settings,
       label: 'Configuración',
-      page: SettingsPage(),
+      page: SettingsScreen(),
     ),
   ];
 
@@ -148,17 +148,17 @@ class _AdaptiveNavigationScaffoldState
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      backgroundColor: Colors.yellow[300],
+      backgroundColor: Colors.yellow[50],
       appBar: AppBar(
         title: Text(_navItems[_selectedIndex].label),
-        backgroundColor: Colors.yellow[800],
+        backgroundColor: Colors.yellow[300],
         foregroundColor: Colors.black,
       ),
       body: Row(
         children: [
           if (!isCompact)
             NavigationRail(
-              backgroundColor: Colors.yellow[700],
+              backgroundColor: Colors.yellow[300],
               selectedIndex: _selectedIndex,
               onDestinationSelected: (index) =>
                   setState(() => _selectedIndex = index),
@@ -199,7 +199,7 @@ class _AdaptiveNavigationScaffoldState
                   )
                   .toList(),
               selectedItemColor: Colors.black,
-              backgroundColor: Colors.yellow[700],
+              backgroundColor: Colors.yellow[300],
             )
           : null,
     );

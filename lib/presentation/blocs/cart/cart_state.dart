@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../domain/entities/beer.dart';
+import '../../../domain/entities/product.dart';
 
 abstract class CartState extends Equatable {
   const CartState();
@@ -13,8 +13,8 @@ class CartLoading extends CartState {}
 
 // Estado una vez que el catálogo y el carrito están listos.
 class CartLoaded extends CartState {
-  final List<Beer> catalog;   // Lista completa de productos disponibles.
-  final List<Beer> cartItems; // Lista de productos en el carrito.
+  final List<Product> catalog;   // Lista completa de productos disponibles.
+  final List<Product> cartItems; // Lista de productos en el carrito.
 
   const CartLoaded({this.catalog = const [], this.cartItems = const []});
 

@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/entities/beer.dart';
-import '../../../domain/repositories/beer_repository.dart';
+import '../../../domain/entities/product.dart';
+import '../../../domain/repositories/product_repository.dart';
 import 'cart_event.dart';
 import 'cart_state.dart';
 
 class CartBloc extends Bloc<CartEvent, CartState> {
-  final BeerRepository _beerRepository;
+  final ProductRepository _beerRepository;
 
-  CartBloc({required BeerRepository beerRepository})
+  CartBloc({required ProductRepository beerRepository})
       : _beerRepository = beerRepository,
         super(CartLoading()) {
     on<CartProductsLoaded>(_onLoadProducts);
@@ -32,8 +32,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     final state = this.state;
     if (state is CartLoaded) {
       final itemIndex =
-          state.cartItems.indexWhere((item) => item.id == event.beer.id);
-      List<Beer> updatedCart = List.from(state.cartItems);
+          state.cartItems.indexWhere((item) => item.id == event.product.id);
+      List<Product> updatedCart = List.from(state.cartItems);
 
       if (itemIndex != -1) {
         // El item ya existe, actualizamos la cantidad
@@ -42,7 +42,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
             updatedCart[itemIndex].copyWith(quantity: newQuantity);
       } else {
         // El item es nuevo, lo añadimos con cantidad 1
-        updatedCart.add(event.beer.copyWith(quantity: 1));
+        updatedCart.add(event.product.copyWith(quantity: 1));
       }
       emit(CartLoaded(catalog: state.catalog, cartItems: updatedCart));
     }
@@ -52,8 +52,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     final state = this.state;
     if (state is CartLoaded) {
       final itemIndex =
-          state.cartItems.indexWhere((item) => item.id == event.beer.id);
-      List<Beer> updatedCart = List.from(state.cartItems);
+          state.cartItems.indexWhere((item) => item.id == event.product.id);
+      List<Product> updatedCart = List.from(state.cartItems);
 
       if (itemIndex != -1 && updatedCart[itemIndex].quantity > 1) {
         int newQuantity = updatedCart[itemIndex].quantity - 1;

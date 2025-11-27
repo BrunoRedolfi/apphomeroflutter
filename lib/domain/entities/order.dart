@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
-import 'beer.dart';
+import 'product.dart';
 
 enum OrderStatus { enProceso, llegando, cancelado, entregado }
 
 class Order extends Equatable {
   final String id;
-  final List<Beer> items;
+  final List<Product> items;
   final DateTime date;
   final OrderStatus status;
 
@@ -21,7 +21,7 @@ class Order extends Equatable {
     final data = doc.data() as Map<String, dynamic>;
     return Order(
       id: doc.id,
-      items: (data['items'] as List).map((itemData) => Beer.fromMap(itemData)).toList(),
+      items: (data['items'] as List).map((itemData) => Product.fromMap(itemData)).toList(),
       date: (data['date'] as Timestamp).toDate(),
       status: OrderStatus.values.firstWhere(
         (e) => e.name == data['status'],

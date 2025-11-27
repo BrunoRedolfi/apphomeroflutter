@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/cart/cart_bloc.dart';
 import '../blocs/cart/cart_event.dart';
 import '../blocs/cart/cart_state.dart';
-import '../../domain/entities/beer.dart';
+import '../../domain/entities/product.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -80,7 +80,7 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialCard(BuildContext context, Beer beer) {
+  Widget _buildInitialCard(BuildContext context, Product beer) {
     return Card(
       key: ValueKey('${beer.name}_initial'),
       color: Colors.yellow[100],
@@ -126,7 +126,7 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveCard(BuildContext context, Beer beer) {
+  Widget _buildActiveCard(BuildContext context, Product beer) {
     return Card(
       key: ValueKey('${beer.name}_active'),
       color: Colors.yellow[100],

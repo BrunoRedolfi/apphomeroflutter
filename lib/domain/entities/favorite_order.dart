@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
-import 'beer.dart';
+import 'product.dart';
 
 class FavoriteOrder extends Equatable {
   final String id;
   final String name;
-  final List<Beer> items;
+  final List<Product> items;
 
   const FavoriteOrder({
     required this.id,
@@ -20,7 +20,7 @@ class FavoriteOrder extends Equatable {
     return FavoriteOrder(
       id: doc.id,
       name: data['name'] ?? 'Pedido Favorito',
-      items: (data['items'] as List).map((itemData) => Beer.fromMap(itemData)).toList(),
+      items: (data['items'] as List).map((itemData) => Product.fromMap(itemData)).toList(),
     );
   }
 

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:intl/intl.dart'; // Necesario para el nombre del favorito
-import '../../domain/entities/beer.dart';
+import '../../domain/entities/product.dart';
 import '../../domain/entities/favorite_order.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -30,7 +30,7 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<void> addOrder(String userId, List<Beer> items) async {
+  Future<void> addOrder(String userId, List<Product> items) async {
     final newOrderRef = _userOrders(userId).doc();
     final itemsMap = items.map((item) => {
       'id': item.id,
